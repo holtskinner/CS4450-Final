@@ -32,7 +32,7 @@ facvar   = parseExp ("var fac = function(n) { if (n==0) 1 else n * fac(n-1) };" 
 
 facrec   = parseExp ("rec fac = function(n) { if (n==0) 1 else n * fac(n-1) };" ++
                    "fac(5)")
-
+exp1, exp2, exp3, exp4, facvar, facrec :: Exp
 exp1     = parseExp "var a = 3; var b = 8; var a = b, b = a; a + b"
 exp2     = parseExp "var a = 3; var b = 8; var a = b; var b = a; a + b"
 exp3     = parseExp "var a = 2, b = 7; (var m = 5 * a, n = b - 1; a * n + b / m) + a"
@@ -57,11 +57,9 @@ eval (Function x body) env          = ClosureV x body env
 eval (Declare decls body) env = eval body newEnv
   where vars = map fst decls
         exps = map snd decls
-        values = foldr eval exps env
-        newEnv = zip vars values
+        values = map (\x -> eval x env) exps
+        newEnv = zip vars values ++ env
 
-  -- zip - combines 2 lists into list of tuples
------------------------------------------------------------------
 eval (RecDeclare x exp body) env    = eval body newEnv
   where newEnv = (x, eval exp newEnv) : env
 eval (Call fun arg) env = eval body newEnv
@@ -103,3 +101,8 @@ process iline  = do
   repl
    where e = parseExp iline
          v = eval e []
+
+{-
+  evaluate () `shouldThrow` anyException
+
+-}
