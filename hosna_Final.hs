@@ -27,18 +27,6 @@ import System.Console.Haskeline
 -- The parsing function, parseExp :: String -> Exp, is defined for you.
 --
 
-facvar   = parseExp ("var fac = function(n) { if (n==0) 1 else n * fac(n-1) };" ++
-                   "fac(5)")
-
-facrec   = parseExp ("rec fac = function(n) { if (n==0) 1 else n * fac(n-1) };" ++
-                   "fac(5)")
-exp1, exp2, exp3, exp4, facvar, facrec :: Exp
-exp1     = parseExp "var a = 3; var b = 8; var a = b, b = a; a + b"
-exp2     = parseExp "var a = 3; var b = 8; var a = b; var b = a; a + b"
-exp3     = parseExp "var a = 2, b = 7; (var m = 5 * a, n = b - 1; a * n + b / m) + a"
-exp4     = parseExp "var a = 2, b = 7; (var m = 5 * a, n = m - 1; a * n + b / m) + a"         
--- N.b.,                                                  ^^^ is a free occurence of m (by Rule 2)
-
 -----------------
 -- The evaluation function for the recursive function language.
 -----------------
@@ -106,3 +94,46 @@ process iline  = do
   evaluate () `shouldThrow` anyException
 
 -}
+
+
+exp1, exp2, exp3, exp4, facvar, facrec :: Exp
+
+facvar   = parseExp ("var fac = function(n) { if (n==0) 1 else n * fac(n-1) };" ++
+                   "fac(5)")
+
+facrec   = parseExp ("rec fac = function(n) { if (n==0) 1 else n * fac(n-1) };" ++
+                   "fac(5)")
+
+exp1     = parseExp "var a = 3; var b = 8; var a = b, b = a; a + b"
+exp2     = parseExp "var a = 3; var b = 8; var a = b; var b = a; a + b"
+exp3     = parseExp "var a = 2, b = 7; (var m = 5 * a, n = b - 1; a * n + b / m) + a"
+exp4     = parseExp "var a = 2, b = 7; (var m = 5 * a, n = m - 1; a * n + b / m) + a"         
+-- N.b.,                                                  ^^^ is a free occurence of m (by Rule 2)
+
+test_prob1 :: IO ()
+test_prob1 = hspec $ do
+  describe "Prob1 from Final - Declare" $ do
+
+    context "var a = 3; var b = 8; var a = b, b = a; a + b" $ do
+      it "should equal 11" $ do
+        execute exp1 `shouldBe` IntV 11
+
+    context "var a = 3; var b = 8; var a = b; var b = a; a + b" $ do
+      it "should equal 16" $ do
+        execute exp2 `shouldBe` IntV 16
+
+    context "var a = 2, b = 7; (var m = 5 * a, n = b - 1; a * n + b / m) + a" $ do
+      it "should equal 14" $ do
+        execute exp3 `shouldBe` IntV 14
+
+    context "var a = 2, b = 7; (var m = 5 * a, n = m - 1; a * n + b / m) + a" $ do
+      it "should throw *** Exception: Variable m unbound!" $ do
+        evaluate (execute exp4) `shouldThrow` anyException
+    
+    context "var fac = function(n) { if (n==0) 1 else n * fac(n-1) }; fac(5)" $ do
+      it "should throw *** Exception: Variable fac unbound!" $ do
+        evaluate (execute facvar) `shouldThrow` anyException
+    
+    context "rec fac = function(n) { if (n==0) 1 else n * fac(n-1) }; fac(5)" $ do
+      it "should equal 120" $ do
+        execute facrec `shouldBe` IntV 120
